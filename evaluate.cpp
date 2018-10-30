@@ -223,19 +223,19 @@ int main(int argc, char *argv[]){
     RegionsSingleImage *det;
     switch(detFormat)
     {
-      case(DET_ELLIPSE):
-	det =  new EllipsesSingleImage(imFullName);
-	((EllipsesSingleImage *)det)->read(fDet, nDet);
-	break;
-      case(DET_RECTANGLE):
-	det =  new RectanglesSingleImage(imFullName);
-	((RectanglesSingleImage *)det)->read(fDet, nDet);
-	break;
-      case(DET_PIXELS):
-	cerr << "Not yet implemented " << endl;
-	assert(false);
-      default:
-	;
+        case(DET_ELLIPSE):
+            det =  new EllipsesSingleImage(imFullName);
+            ((EllipsesSingleImage *)det)->read(fDet, nDet);
+            break;
+        case(DET_RECTANGLE):
+            det =  new RectanglesSingleImage(imFullName);
+            ((RectanglesSingleImage *)det)->read(fDet, nDet);
+            break;
+        case(DET_PIXELS):
+            cerr << "Not yet implemented " << endl;
+            assert(false);
+        default:
+        ;
     }
 
     // imageResults holds the results for different thresholds
@@ -244,87 +244,91 @@ int main(int argc, char *argv[]){
 
     if(nDet == 0)
     {
-	// create the image results for zero detections
-	Results *r = new Results(imName, std::numeric_limits<double>::max(), NULL, annot, det);
-	imageResults->push_back(r);
+    	// create the image results for zero detections
+    	// Not necessary
+        /*
+        Results *r = new Results(imName, std::numeric_limits<double>::max(), NULL, annot, det);
+    	imageResults->push_back(r);
+    	*/
     }
     else
     {
-      // attach annot and det to the Maching object
-      Matching *M = new Matching(annot, det);
+        // attach annot and det to the Maching object
+        Matching *M = new Matching(annot, det);
 
-      // find the unique values for detection scores
-      vector<double> *uniqueScores = det->getUniqueScores();
-      sort(uniqueScores->begin(), uniqueScores->end());
+        // find the unique values for detection scores
+        vector<double> *uniqueScores = det->getUniqueScores();
+        sort(uniqueScores->begin(), uniqueScores->end());
 
-      imageResults->reserve(uniqueScores->size());
+        imageResults->reserve(uniqueScores->size());
 
-      // For each unique score value st,
-      //  (a) filter the detections with score >= st
-      //  (b) compute the matching annot-det pairs
-      //  (c) compute the result statistics
-      for(vector<double>::iterator uit=uniqueScores->begin(); uit != uniqueScores->end(); ++uit)
-      {
+        // For each unique score value st,
+        //  (a) filter the detections with score >= st
+        //  (b) compute the matching annot-det pairs
+        //  (c) compute the result statistics
+        for(vector<double>::iterator uit=uniqueScores->begin(); uit != uniqueScores->end(); ++uit)
+        {
 
-	//  (a) filter the detections with score >= st
-	double scoreThreshold = *uit;
-	for(unsigned di =0; di<det->length(); di++)
-	{
-	  Region *rd = det->get(di);
-	  rd->setValid( rd->detScore >= scoreThreshold );
-	}
 
-	//  (b) match annotations to detections
-	vector<MatchPair *> *mps = M->getMatchPairs();
+            //  (a) filter the detections with score >= st
+            double scoreThreshold = *uit;
+            for(unsigned di =0; di<det->length(); di++)
+            {
+              Region *rd = det->get(di);
+              rd->setValid( rd->detScore >= scoreThreshold );
+            }
 
-	// if the matched pairs are to be displayed
-	if(showMatchPairs)
-	{
-	  if(mps!= NULL)
-	  {
-	    const IplImage *im = annot->getImage();
-	    assert(im != NULL);
-	    IplImage *mask = cvCreateImage(cvGetSize(im), im->depth, im->nChannels);
-	    cvCopy(im, mask, 0);
-	    for(unsigned int i=0; i< mps->size(); i++)
-	    {
-	      stringstream ss("");
-	      ss << i;
-	      const char *textDetInd = ss.str().c_str();
-	      mask = ( (EllipseR *)(mps->at(i)->r1) )->display(mask, CV_RGB(255,0,0), 3, textDetInd);
-	      switch(detFormat)
-	      {
-		case(DET_RECTANGLE):
-		  mask = ( (RectangleR *)(mps->at(i)->r2) )->display(mask, CV_RGB(0,255,0), 3, textDetInd);
-		  break;
-		case(DET_ELLIPSE):
-		  mask = ( (EllipseR *)(mps->at(i)->r2) )->display(mask, CV_RGB(0,255,0), 3, textDetInd);
-		  break;
-		case(DET_PIXELS):
-		  cerr << "Not yet implemented " << endl;
-		  return -1;
-		  break;
-		default:
-		  ;
-	      }
-	    }
-	    showImage(" matches ", mask);
-	    cvReleaseImage(&mask);
-	  }
-	}
+            //  (b) match annotations to detections
+            vector<MatchPair *> *mps = M->getMatchPairs();
 
-	//  (c) compute the result statistics and append to the list
-	Results *r = new Results(imName, scoreThreshold, mps, annot, det);
-	imageResults->push_back(r);
+            // if the matched pairs are to be displayed
+            if(showMatchPairs)
+            {
+              if(mps!= NULL)
+              {
+                const IplImage *im = annot->getImage();
+                assert(im != NULL);
+                IplImage *mask = cvCreateImage(cvGetSize(im), im->depth, im->nChannels);
+                cvCopy(im, mask, 0);
+                for(unsigned int i=0; i< mps->size(); i++)
+                {
+                  stringstream ss("");
+                  ss << i;
+                  const char *textDetInd = ss.str().c_str();
+                  mask = ( (EllipseR *)(mps->at(i)->r1) )->display(mask, CV_RGB(255,0,0), 3, textDetInd);
+                  switch(detFormat)
+                  {
+            	case(DET_RECTANGLE):
+            	  mask = ( (RectangleR *)(mps->at(i)->r2) )->display(mask, CV_RGB(0,255,0), 3, textDetInd);
+            	  break;
+            	case(DET_ELLIPSE):
+            	  mask = ( (EllipseR *)(mps->at(i)->r2) )->display(mask, CV_RGB(0,255,0), 3, textDetInd);
+            	  break;
+            	case(DET_PIXELS):
+            	  cerr << "Not yet implemented " << endl;
+            	  return -1;
+            	  break;
+            	default:
+            	  ;
+                  }
+                }
+                showImage(" matches ", mask);
+                cvReleaseImage(&mask);
+              }
+            }
 
-	//r->print(std::cout);
-	for(unsigned int mpi=0; mpi < mps->size(); mpi++)
-	  delete(mps->at(mpi));
-	delete(mps);
-      }
+            //  (c) compute the result statistics and append to the list
+            Results *r = new Results(imName, scoreThreshold, mps, annot, det);
+            imageResults->push_back(r);
 
-      delete(uniqueScores);
-      delete(M);
+            //r->print(std::cout);
+            for(unsigned int mpi=0; mpi < mps->size(); mpi++)
+              delete(mps->at(mpi));
+            delete(mps);
+        }
+
+        delete(uniqueScores);
+        delete(M);
     }
     delete(annot);
     delete(det);

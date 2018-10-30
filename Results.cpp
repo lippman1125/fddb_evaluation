@@ -76,15 +76,16 @@ Results::Results(string s, double scoreThresh, vector<MatchPair *> *mp, RegionsS
     if( (det->get(i))->isValid() )
       FP++;
 
+  //cout << "anno_num : " << N << " det_num : " << FP << " Thresh: " << scoreThreshold<< endl;
   TPCont = 0;
   TPDisc = 0;
   if(mp)
     for(unsigned int i=0; i< mp->size(); i++){
       double score = mp->at(i)->score;
-      TPCont += score; 
-      if( score>0.5 ) 
+      TPCont += score;
+      if( score>0.5 )
       {
-	TPDisc++; 
+	TPDisc++;
 	FP--;
       }
     }
@@ -93,84 +94,86 @@ Results::Results(string s, double scoreThresh, vector<MatchPair *> *mp, RegionsS
 
 vector<Results *> * Results::merge(vector<Results *> *rv1, vector<Results *> *rv2){
 
-  vector<Results *> *mergeV = new vector<Results *>;
-  unsigned int n1 = 0;
-  if(rv1)
-    n1 = rv1->size();
-  unsigned int n2 = 0;
-  if(rv2)
-	  n2 = rv2->size();
+    vector<Results *> *mergeV = new vector<Results *>;
+    unsigned int n1 = 0;
+    if(rv1)
+        n1 = rv1->size();
+    unsigned int n2 = 0;
+    if(rv2)
+        n2 = rv2->size();
 
-  unsigned int nAnnot1=0, nAnnot2=0;
+    unsigned int nAnnot1=0, nAnnot2=0;
 
-  if(n1)
-  {
-    nAnnot1 = rv1->at(0)->getN();
-    if(n2)
-      nAnnot2 = rv2->at(0)->getN();
-
-    unsigned int i1=0, i2=0;
-    double score1, score2;
-
-    Results *r1 = NULL;
-    Results *r2 = NULL;
-
-    while(i1 < n1)
+    if(n1)
     {
-      r1 = rv1->at(i1);
-      score1 = rv1->at(i1)->scoreThreshold;
-      if(i2 < n2)
-      {
-	r2 = rv2->at(i2);
-	score2 = rv2->at(i2)->scoreThreshold;
-	Results *newR = new Results(r1,r2);
-	mergeV->push_back( newR );
-	if(score1 < score2)
-	{
-	  i1++;
-	}
-	else if(score1 == score2)
-	{
-	  i1++;
-	  i2++;
-	}
-	else
-	{
-	  i2++;
-	}
-      }
-      else
-      {
-	while(i1 < n1)
-	{
-	  // add from rv1
-	  r1 = rv1->at(i1);
+        nAnnot1 = rv1->at(0)->getN();
+        if(n2)
+            nAnnot2 = rv2->at(0)->getN();
 
-	  Results *newR = new Results(r1,nAnnot2);
-	  mergeV->push_back( newR );
-	  i1++;
-	}
-      }
-    }
+        unsigned int i1=0, i2=0;
+        double score1, score2;
 
-    while(i2 < n2)
-    {
-      // add from rv2
-      r2 = rv2->at(i2);
-      Results *newR = new Results(r2, nAnnot1);
-      mergeV->push_back( newR );
-      i2++;
+        Results *r1 = NULL;
+        Results *r2 = NULL;
+
+        while(i1 < n1)
+        {
+            r1 = rv1->at(i1);
+            score1 = rv1->at(i1)->scoreThreshold;
+            if(i2 < n2)
+            {
+                r2 = rv2->at(i2);
+                score2 = rv2->at(i2)->scoreThreshold;
+                Results *newR = new Results(r1,r2);
+                //cout << newR->N << " " << newR->FP << " " <<newR->TPDisc << " " << newR->scoreThreshold << endl;
+                mergeV->push_back( newR );
+                if(score1 < score2)
+                {
+                    i1++;
+                }
+                else if(score1 == score2)
+                {
+                    i1++;
+                    i2++;
+                }
+                else
+                {
+                    i2++;
+                }
+            }
+            else
+            {
+                while(i1 < n1)
+                {
+                    // add from rv1
+                    r1 = rv1->at(i1);
+
+                    Results *newR = new Results(r1,nAnnot2);
+                    mergeV->push_back( newR );
+                    i1++;
+                }
+            }
+        }
+
+        while(i2 < n2)
+        {
+            // add from rv2
+            r2 = rv2->at(i2);
+            Results *newR = new Results(r2, nAnnot1);
+            mergeV->push_back( newR );
+            i2++;
+        }
     }
-  }
-  else
-  {
-    if(n2)
+    else
     {
-      for(unsigned int i=0; i< n2; i++)
-	mergeV->push_back(new Results(rv2->at(i)));
+
+        if(n2)
+        {
+            for(unsigned int i=0; i< n2; i++)
+                mergeV->push_back(new Results(rv2->at(i)));
+        }
     }
-  }
-  return mergeV;
+    return mergeV;
 }
 
 void Results::print(std::ostream &os){
@@ -184,22 +187,30 @@ void Results::saveROC(string outFile, vector<Results *> *rv){
   s = outFile + "DiscROC.txt";
   ofstream osd(s.c_str());
 
+  //generate pr curve
+  s = outFile + "PR.txt";
+  ofstream pr(s.c_str());
+
   for(unsigned int i=0; i< rv->size(); i++)
   {
     Results *r = rv->at(i);
+    //cout << r->scoreThreshold<<endl;
     if(r->N)
     {
       osc << (r->TPCont / r->N) << " " << r->FP << endl;
       osd << (r->TPDisc / r->N) << " " << r->FP << " " << r->scoreThreshold<< endl;
+      pr  << ((r->TPDisc + r->FP) == 0 ? 1 : r->TPDisc/(r->TPDisc + r->FP)) << " " << (r->TPDisc / r->N) << " " << r->scoreThreshold<< endl;
     }
     else
     {
       osc << "0 0" << endl;
       osd << "0 0 " <<  r->scoreThreshold<< endl;
+      pr << "0 0 " <<  r->scoreThreshold<< endl;
     }
   }
   osc.close();
   osd.close();
+  pr.close();
 }
 
 unsigned int Results::getN()
