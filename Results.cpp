@@ -181,14 +181,14 @@ void Results::print(std::ostream &os){
 }
 
 void Results::saveROC(string outFile, vector<Results *> *rv){
-  string s = outFile + "ContROC.txt";
+  string s = outFile + "_ContROC.txt";
   ofstream osc(s.c_str());
 
-  s = outFile + "DiscROC.txt";
+  s = outFile + "_DiscROC.txt";
   ofstream osd(s.c_str());
 
   //generate pr curve
-  s = outFile + "PR.txt";
+  s = outFile + "_PR.txt";
   ofstream pr(s.c_str());
 
   for(unsigned int i=0; i< rv->size(); i++)
