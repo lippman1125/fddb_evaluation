@@ -11,4 +11,5 @@ set xr [0:1.0]
 set yr [0:1.0]
 set key below
 set output "fddb_xiaomi_PR.png"
-plot  "fddb_xiaomi_PR.txt" using 2:1 title 'Face xiaomi PR' with linespoints pointinterval 50 lw 3
+plot  "fddb_xiaomi_PR.txt" using 2:1 title 'xiaomi PR' with linespoints pointinterval 50 lw 3,\
+      "fddb_xiaomi_cambricon_PR.txt" using 2:1 title 'xiaomi Cambricon PR' with linespoints pointinterval 50 lw 3
